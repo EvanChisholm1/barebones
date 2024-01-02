@@ -11,15 +11,21 @@ embed_size = 8
 hidden_size = 128
 
 vocab = sorted(list(set(''.join(text))))
-stoi = { ch:i for i,ch in enumerate(vocab) }
+print(''.join(vocab))
+stoi = { ch:i + 1 for i,ch in enumerate(vocab) }
 stoi['.'] = 0
-itos = { i:ch for i,ch in enumerate(vocab) }
-vocab_size = len(vocab)
+itos = { i:ch for i,ch in stoi.items() }
+vocab_size = len(vocab) + 1
 block_size = 4 
 output_size = vocab_size
 
+print(vocab_size)
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+input_sequence = ".ahello"
+input_sequence = [stoi[s] for s in input_sequence]
+print(input_sequence)
 
 class MLP(nn.Module):
     def __init__(self):
@@ -68,15 +74,18 @@ n1 = int(0.8 * len(text))
 Xtr, Ytr = build_dataset(text[:n1])
 
 model = MLP().to(device)
+# get number of parameters in model
+print(sum(p.numel() for p in model.parameters() if p.requires_grad))
 
 # for name, param in model.named_parameters():
 #     print(name, param.shape)
 
-print(model.embed.weight)
-
 # write embed weights to file
 with open('./weights.bin', 'wb') as f:
-    f.write(model.embed.weight.cpu().data.numpy().tobytes())
+    for name, param in model.named_parameters():
+        print(name, param.shape)
+        print(param)
+        f.write(param.cpu().data.numpy().tobytes())
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
