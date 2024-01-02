@@ -87,6 +87,11 @@ with open('./weights.bin', 'wb') as f:
         print(param)
         f.write(param.cpu().data.numpy().tobytes())
 
+input_str = "hello"
+input_str = [stoi[s] for s in input_str]
+print('\n\nembedding:')
+print(model.embed(torch.tensor(input_str).to(device)))
+
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
 # for epoch in range(10000):

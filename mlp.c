@@ -127,6 +127,20 @@ void print_vf(vf v) {
     printf("\n");
 }
 
+vf embed(char *str) {
+    vi int_index = string_to_int(str);
+
+    float *embed = (float *)malloc(sizeof(float) * config.embed_size * int_index.size);
+
+    for(int i = 0; i < int_index.size; i++) {
+        for(int j = 0; j < config.embed_size; j++) {
+            embed[i * config.embed_size + j] = embed_weight.a[int_index.a[i] * config.embed_size + j];
+        }
+    }
+
+    return (vf){embed, config.embed_size * int_index.size};
+}
+
 int main() {
     config.block_size = 4;
     config.embed_size = 8;
@@ -142,8 +156,11 @@ int main() {
     //     printf("%f\n", params.a[i]);
     // }
 
-    print_vf(fc2_bias);
+    // print_vf(fc2_bias);
+    vf embedding = embed("hello");
+    print_vf(embedding);
 
+    free(embedding.a);
     free(params.a);
 
     return 0;
