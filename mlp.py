@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import struct
 
 with open('./names.txt', 'r') as f:
     text = f.read().splitlines()
@@ -75,13 +76,17 @@ Xtr, Ytr = build_dataset(text[:n1])
 
 model = MLP().to(device)
 # get number of parameters in model
-print(sum(p.numel() for p in model.parameters() if p.requires_grad))
+n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(n_params)
 
 # for name, param in model.named_parameters():
 #     print(name, param.shape)
 
 # write embed weights to file
 with open('./weights.bin', 'wb') as f:
+    # write header
+    header = struct.pack('iiiiii', embed_size, hidden_size, vocab_size, block_size, output_size, n_params)
+    f.write(header)
     for name, param in model.named_parameters():
         print(name, param.shape)
         print(param)
