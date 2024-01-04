@@ -73,7 +73,6 @@ vf fc2_bias = {NULL, 0};
 
 void load_params() {
     FILE *file;
-    float *buffer = (float *)malloc(sizeof(float) * config.n_params);
 
     file = fopen("weights.bin", "rb");
     if(file == NULL) {
@@ -81,6 +80,9 @@ void load_params() {
         exit(1);
     }
 
+    fread(&config, sizeof(config), 1, file);
+
+    float *buffer = (float *)malloc(sizeof(float) * config.n_params);
     size_t elements_read = fread(buffer, sizeof(float), config.n_params, file);
 
     if(elements_read == 0) {
@@ -142,21 +144,8 @@ vf embed(char *str) {
 }
 
 int main() {
-    config.block_size = 4;
-    config.embed_size = 8;
-    config.hidden_size = 128;
-    config.vocab_size = 27;
-    config.output_size = 27;
-    config.n_params = 7923;
-
     load_params();
 
-    // print each param
-    // for(int i = 0; i < config.n_params; i++) {
-    //     printf("%f\n", params.a[i]);
-    // }
-
-    // print_vf(fc2_bias);
     vf embedding = embed("hello");
     print_vf(embedding);
 
