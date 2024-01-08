@@ -40,7 +40,9 @@ class MLP(nn.Module):
         x = self.embed(x)
         # flatten the input
         x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
+        x = self.fc1(x)
+        print('pre relu', x)
+        x = F.relu(x)
         x = self.fc2(x)
 
         if targets is not None:
@@ -96,6 +98,9 @@ input_str = "hello"
 input_str = [stoi[s] for s in input_str]
 print('\n\nembedding:')
 print(model.embed(torch.tensor(input_str).to(device)))
+
+print('forward:')
+model(torch.tensor(input_str[1:]).to(device).unsqueeze(0))
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 

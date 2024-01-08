@@ -21,8 +21,8 @@ struct Vecf {
 
 struct Matf {
     float *a;
-    int width;
-    int height;
+    int n;
+    int d;
 };
 
 struct MlpConfig {
@@ -66,7 +66,7 @@ char *int_to_string(vi int_index) {
 struct MlpConfig config;
 vf params = {NULL, 0};
 vf embed_weight = {NULL, 0};
-vf fc1_weight = {NULL, 0};
+mf fc1_weight = {NULL, 0, 0};
 vf fc1_bias = {NULL, 0};
 vf fc2_weight = {NULL, 0};
 vf fc2_bias = {NULL, 0};
@@ -102,7 +102,9 @@ void load_params() {
     int fc1_weight_size = config.hidden_size * config.block_size * config.embed_size;
     int fc1_weight_offset = embed_weight_size;
     fc1_weight.a = params.a + fc1_weight_offset;
-    fc1_weight.size = fc1_weight_size;
+    fc1_weight.n = config.hidden_size;
+    fc1_weight.d = config.block_size * config.embed_size;
+    // fc1_weight.size = fc1_weight_size;
 
     int fc1_bias_size = config.hidden_size;
     int fc1_bias_offset = fc1_weight_offset + fc1_weight_size;
@@ -122,11 +124,82 @@ void load_params() {
     fclose(file);
 }
 
+mf create_mf(int n, int d) {
+    float *a = (float *)malloc(sizeof(float) * n * d);
+    mf out;
+    out.a = a;
+    out.n = n;
+    out.d = d;
+    return out;
+}
+
+mf matmul(mf a, mf b) {
+    mf out = create_mf(b.n, a.d);
+
+    for(int col = 0; col < out.d; col++) {
+        for(int row = 0; row < out.n; row++) {
+            float item = 0;
+
+            for(int j = 0; j < a.d; j++) {
+                item += a.a[row * a.d + j] * b.a[j * b.d+ col];
+            }
+
+            out.a[row * out.d + col] = item;
+        }
+    }
+
+    return out;
+}
+
+vf add_bias(vf a, vf b) {
+    for(int i = 0; i < b.size; i++) {
+        a.a[i] += b.a[i];
+    }
+
+    return a;
+}
+
+vf as_vf(mf m) {
+    vf ret;
+    ret.a = m.a;
+    ret.size = m.n * m.d;
+    return ret;
+}
+
+mf as_mf(vf v, int n, int d) {
+    mf ret;
+    ret.a = v.a;
+    ret.n = n;
+    ret.d = d;
+    return ret;
+}
+
+float max(float a, float b) {
+    if(a > b) return a;
+    else return b;
+}
+
+void relu(float *a, int size) {
+    for(int i = 0; i < size; i++) {
+        a[i] = max(0, a[i]);
+    }
+}
+
 void print_vf(vf v) {
     for(int i = 0; i < v.size; i++) {
         printf("%f ", v.a[i]);
     }
     printf("\n");
+}
+
+void print_mf(mf m) {
+    for(int i = 0; i < m.n; i++) {
+        printf("|");
+        for(int j = 0; j < m.d; j++) {
+            printf("%f ", m.a[i * m.d + j]);
+        }
+        printf("|\n");
+    }
 }
 
 vf embed(char *str) {
@@ -145,9 +218,18 @@ vf embed(char *str) {
 
 int main() {
     load_params();
+    printf("hidden size: %d\n", config.hidden_size);
 
-    vf embedding = embed("hello");
-    print_vf(embedding);
+    vf embedding = embed("hell");
+    // print_vf(embedding);
+    mf e = as_mf(embedding, 32, 1);
+    vf pre_relu = add_bias(as_vf(matmul(e, fc1_weight)), fc1_bias);
+    printf("size: %d\n", pre_relu.size);
+    print_vf(pre_relu);
+    // print_mf(add_bias(as_vf((e, fc1_weight)), fc1_bias));
+
+    // printf("\n\nFC 1 weight\n");
+    // print_mf(fc1_weight);
 
     free(embedding.a);
     free(params.a);
