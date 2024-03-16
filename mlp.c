@@ -104,7 +104,9 @@ void load_params() {
     fc1_weight.a = params.a + fc1_weight_offset;
     fc1_weight.n = config.hidden_size;
     fc1_weight.d = config.block_size * config.embed_size;
-    // fc1_weight.size = fc1_weight_size;
+
+    printf("fc1 weight:\n");
+    print_mf(fc1_weight);
 
     int fc1_bias_size = config.hidden_size;
     int fc1_bias_offset = fc1_weight_offset + fc1_weight_size;
@@ -221,11 +223,19 @@ int main() {
     printf("hidden size: %d\n", config.hidden_size);
 
     vf embedding = embed("hell");
-    // print_vf(embedding);
-    mf e = as_mf(embedding, 32, 1);
-    vf pre_relu = add_bias(as_vf(matmul(e, fc1_weight)), fc1_bias);
-    printf("size: %d\n", pre_relu.size);
-    print_vf(pre_relu);
+    print_vf(embedding);
+    mf e = as_mf(embedding, 1, config.embed_size * config.block_size);
+
+    printf("E shape: %d, %d\n", e.n, e.d);
+    printf("FC1 weight shape: %d, %d\n", fc1_weight.n, fc1_weight.d);
+
+    // mf fc1 = matmul(fc1_weight, e);
+    mf fc1 = matmul(e, fc1_weight);
+    printf("\n\nfc1\n");
+    print_mf(fc1);
+    // vf pre_relu = add_bias(as_vf(matmul(e, fc1_weight)), fc1_bias);
+    // printf("size: %d\n", pre_relu.size);
+    // print_vf(pre_relu);
     // print_mf(add_bias(as_vf((e, fc1_weight)), fc1_bias));
 
     // printf("\n\nFC 1 weight\n");

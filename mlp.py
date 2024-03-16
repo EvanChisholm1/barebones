@@ -8,8 +8,8 @@ with open('./names.txt', 'r') as f:
 
 
 # Hyper-parameters
-embed_size = 8
-hidden_size = 128
+embed_size = 1
+hidden_size = 4
 
 vocab = sorted(list(set(''.join(text))))
 print(''.join(vocab))
@@ -35,12 +35,18 @@ class MLP(nn.Module):
 
         self.fc1 = nn.Linear(embed_size * block_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, output_size)
+
+        self.fc1.bias.data.fill_(0)
     
     def forward(self, x, targets=None):
         x = self.embed(x)
         # flatten the input
-        x = x.view(x.size(0), -1)
+        # x = x.view(x.size(0), -1)
+        x = x.flatten(1)
+        print(x.shape)
+        # print("embed:", x)
         x = self.fc1(x)
+        print(x.shape)
         print('pre relu', x)
         x = F.relu(x)
         x = self.fc2(x)
@@ -94,13 +100,13 @@ with open('./weights.bin', 'wb') as f:
         print(param)
         f.write(param.cpu().data.numpy().tobytes())
 
-input_str = "hello"
+input_str = "hell"
 input_str = [stoi[s] for s in input_str]
 print('\n\nembedding:')
 print(model.embed(torch.tensor(input_str).to(device)))
 
 print('forward:')
-model(torch.tensor(input_str[1:]).to(device).unsqueeze(0))
+model(torch.tensor(input_str).to(device).unsqueeze(0))
 
 # optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
