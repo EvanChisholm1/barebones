@@ -36,19 +36,20 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(embed_size * block_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, output_size)
 
-        self.fc1.bias.data.fill_(0)
+        # self.fc1.bias.data.fill_(0)
     
     def forward(self, x, targets=None):
         x = self.embed(x)
         # flatten the input
         # x = x.view(x.size(0), -1)
         x = x.flatten(1)
-        print(x.shape)
+        # print(x.shape)
         # print("embed:", x)
         x = self.fc1(x)
-        print(x.shape)
-        print('pre relu', x)
+        # print(x.shape)
+        # print('pre relu', x)
         x = F.relu(x)
+        print("Post Relu FC1", x)
         x = self.fc2(x)
 
         if targets is not None:
