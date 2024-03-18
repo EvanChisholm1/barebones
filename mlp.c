@@ -21,8 +21,8 @@ struct Vecf {
 
 struct Matf {
     float *a;
-    int n;
-    int d;
+    int width;
+    int height;
 };
 
 struct MlpConfig {
@@ -102,8 +102,8 @@ void load_params() {
     int fc1_weight_size = config.hidden_size * config.block_size * config.embed_size;
     int fc1_weight_offset = embed_weight_size;
     fc1_weight.a = params.a + fc1_weight_offset;
-    fc1_weight.n = config.hidden_size;
-    fc1_weight.d = config.block_size * config.embed_size;
+    fc1_weight.width = config.hidden_size;
+    fc1_weight.height = config.block_size * config.embed_size;
 
     printf("fc1 weight:\n");
     print_mf(fc1_weight);
@@ -126,27 +126,27 @@ void load_params() {
     fclose(file);
 }
 
-mf create_mf(int n, int d) {
-    float *a = (float *)malloc(sizeof(float) * n * d);
+
+mf create_mf(int width, int height) {
     mf out;
-    out.a = a;
-    out.n = n;
-    out.d = d;
+    out.width = width;
+    out.height = height;
+    out.a = (float *)malloc(sizeof(float) * width * height);
     return out;
 }
 
 mf matmul(mf a, mf b) {
-    mf out = create_mf(b.n, a.d);
+    mf out = create_mf(b.width, a.height);
 
-    for(int col = 0; col < out.d; col++) {
-        for(int row = 0; row < out.n; row++) {
+    for(int col = 0; col < out.width; col++) {
+        for(int row = 0; row < out.height; row++) {
             float item = 0;
 
-            for(int j = 0; j < a.d; j++) {
-                item += a.a[row * a.d + j] * b.a[j * b.d+ col];
+            for(int j = 0; j < a.width; j++) {
+                item += a.a[row * a.width + j] * b.a[j * b.width + col];
             }
 
-            out.a[row * out.d + col] = item;
+            out.a[row * out.width + col] = item;
         }
     }
 
@@ -164,15 +164,15 @@ vf add_bias(vf a, vf b) {
 vf as_vf(mf m) {
     vf ret;
     ret.a = m.a;
-    ret.size = m.n * m.d;
+    ret.size = m.width * m.height;
     return ret;
 }
 
-mf as_mf(vf v, int n, int d) {
+mf as_mf(vf v, int width, int height) {
     mf ret;
     ret.a = v.a;
-    ret.n = n;
-    ret.d = d;
+    ret.width = width;
+    ret.height = height;
     return ret;
 }
 
@@ -195,10 +195,10 @@ void print_vf(vf v) {
 }
 
 void print_mf(mf m) {
-    for(int i = 0; i < m.n; i++) {
+    for(int i = 0; i < m.height; i++) {
         printf("|");
-        for(int j = 0; j < m.d; j++) {
-            printf("%f ", m.a[i * m.d + j]);
+        for(int j = 0; j < m.width; j++) {
+            printf("%f ", m.a[i * m.width + j]);
         }
         printf("|\n");
     }
@@ -226,11 +226,11 @@ int main() {
     print_vf(embedding);
     mf e = as_mf(embedding, 1, config.embed_size * config.block_size);
 
-    printf("E shape: %d, %d\n", e.n, e.d);
-    printf("FC1 weight shape: %d, %d\n", fc1_weight.n, fc1_weight.d);
+    printf("E shape: %d, %d\n", e.width, e.height);
+    printf("FC1 weight shape: %d, %d\n", fc1_weight.width, fc1_weight.height);
 
-    // mf fc1 = matmul(fc1_weight, e);
-    mf fc1 = matmul(e, fc1_weight);
+    mf fc1 = matmul(fc1_weight, e);
+    // mf fc1 = matmul(e, fc1_weight);
     printf("\n\nfc1\n");
     print_mf(fc1);
     // vf pre_relu = add_bias(as_vf(matmul(e, fc1_weight)), fc1_bias);
